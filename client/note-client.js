@@ -1,40 +1,34 @@
-const baseUrl = "http://localhost:3000";
-
-async function addNote(noteData) {
-    const response = await fetch(`${baseUrl}/notes`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(noteData)
-    });
-    return response;
-}
-
-async function updateNote(noteData) {
-    const response = await fetch(`${baseUrl}/notes`, {
-        method: "PUT",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(noteData)
-    });
-    return response;
-}
-
-async function deleteNote(noteId) {
-    const response = await fetch(`${baseUrl}/notes/${noteId}`, {
-        method: "DELETE"
-    });
-    return response;
-}
-
-async function getNoteById(noteId) {
-    const response = await fetch(`${baseUrl}/notes/${noteId}`);
-    return response.json();
-}
-
-async function getNotes(noteTitle) {
-    let url = `${baseUrl}/notes`;
-    if(noteTitle) {
-        url += `/?title=${noteTitle}`;
-    }
-    const response = await fetch(url);
-    return response.json();
-}
+function getNotes() {
+    return fetch('/api/notes')
+      .then(response => response.json())
+      .then(notes => notes);
+  }
+  
+  function createNote(note) {
+    return fetch('/api/notes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(note),
+      })
+      .then(response => response.json())
+      .then(createdNote => createdNote);
+  }
+  
+  function updateNote(id, note) {
+    return fetch(`/api/notes/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(note),
+      })
+      .then(response => response.json())
+      .then(updatedNote => updatedNote);
+  }
+  
+  function deleteNote(id) {
+    return fetch(`/api/notes/${id}`, { method: 'DELETE' });
+  }
+  

@@ -1,97 +1,36 @@
 const express = require('express');
-const cors = require('cors');
-const Database = require('./Database');
-const bodyParser = require('body-parser');
-
-const db = new Database();
-
 const app = express();
 const port = 3000;
-// Cross origin resource sharing. Important so that client will be able to make calls to APIs on a different domain.
-app.use(cors());
+const bodyParser = require('body-parser');
+const sequelize = require('./Database');
+const NoteHandler = require('./note-handler');
+const { DataTypes } = require('sequelize');
+
+// Define the Note model
+const Note = sequelize.define('Note', {
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  content: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  }
+});
+
+// Create tables in the database
+sequelize.sync();
+
 app.use(bodyParser.json());
-// The extended option allows to choose between parsing the URL-encoded data with the querystring library (when false)
-// or the qs library (when true). 
-app.use(bodyParser.urlencoded({ extended: false }));
 
-app.get('/', (req, res) => {
-    let json = {health:true};
-    res.send(json);
-});
+// Initialize NoteHandler with Note model
+const noteHandler = new NoteHandler(Note);
 
-app.get('/notes', (req, res) => {
-    const { title } = req.query;
-    if(title) {
-        db.getNotesByTitle(title)
-            .then(data => {
-                res.send(data);
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
+// Set up API routes
+app.get('/api/notes', noteHandler.getAllNotes.bind(noteHandler));
+app.post('/api/notes', noteHandler.createNote.bind(noteHandler));
+app.put('/api/notes/:id', noteHandler.updateNote.bind(noteHandler));
+app.delete('/api/notes/:id', noteHandler.deleteNote.bind(noteHandler));
 
-    } else {
-        db.getNotes()
-            .then(data => {
-                res.send(data);
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            })
-    }
-});
-
-app.post('/notes', (req, res) => {
-    db.addNote(req.body)
-    .then(data => {
-        res.send(data);
-    })
-    .catch(error => {
-        res.status(500).send(error);
-    })
-});
-
-app.get('/notes/:id', (req, res) => {
-    const { id } = req.params;
-    db.getNoteById(id)
-    .then(data => {
-        if(!data) {
-            res.status(404).send(`Note with id ${id} doesn't exist`);
-        } else {
-            res.send(data);
-        }
-    })
-    .catch(error => {
-        res.status(500).send(error);
-    })
-});
-
-app.put('/notes', (req, res) => {
-    db.updateNote(req.body)
-        .then(data => {
-            if(!data) {
-                res.status(404).send(`Note doesn't exist`);
-            } else {
-                res.send(data);
-            }
-        })
-        .catch(error => {
-            res.status(500).send(error);
-        });
-});
-
-app.delete('/notes/:id', (req, res) => {
-    const { id } = req.params;
-    db.deleteNote(id)
-    .then(data => {
-        res.send(data);
-    })
-    .catch(error => {
-        res.status(500).send(error);
-    })
-});
-
-app.listen(port, () => {
-    console.log(`Started node server and listening to port ${port}`);
-    db.connect();
-});
+// Start the server
+app.listen(port, () => console.log(`App listening on port ${port}!`));
