@@ -1,101 +1,107 @@
-const mongoose = require("mongoose");
-const Note = require("./schemas/note");
+const API_URL = 'http://localhost:3000/api/notes';
 
-class Database {
-  constructor() {
-    this.Url = "mongodb://localhost:27017/notaty";
-  }
+const Database = {
+  addNote: function(note) {
+    return fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(note)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error adding note');
+      }
+      return response.json();
+    })
+    .catch(error => {
+      console.error('Error adding note:', error);
+      throw error;
+    });
+  },
 
-  connect() {
-    mongoose
-      .connect(this.Url, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false })
-      .then(() => {
-        console.log("Connected to db");
-      })
-      .catch((err) => {
-        console.log("Error received when adding note:", err);
-      });
-  }
+  updateNote: function(note) {
+    const url = `${API_URL}/${note._id}`;
+    return fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(note)
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error updating note');
+      }
+      return response.json();
+    })
+    .catch(error => {
+      console.error('Error updating note:', error);
+      throw error;
+    });
+  },
 
-  addNote(note) {
-    return new Promise((resolve, reject) => {
-      note["createdDate"] = new Date();
-      note["updatedDate"] = new Date();
-      let newNote = new Note(note);
-      newNote
-        .save()
-        .then((doc) => {
-          resolve(doc);
-        })
-        .catch((err) => {
-          reject(err);
-        });
+  getNotes: function() {
+    return fetch(API_URL)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error getting notes');
+      }
+      return response.json();
+    })
+    .catch(error => {
+      console.error('Error getting notes:', error);
+      throw error;
+    });
+  },
+
+  getNoteById: function(noteId) {
+    const url = `${API_URL}/${noteId}`;
+    return fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error getting note by ID');
+      }
+      return response.json();
+    })
+    .catch(error => {
+      console.error('Error getting note by ID:', error);
+      throw error;
+    });
+  },
+
+  getNotesByTitle: function(noteTitle) {
+    const url = `${API_URL}/search/${noteTitle}`;
+    return fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error searching notes');
+      }
+      return response.json();
+    })
+    .catch(error => {
+      console.error('Error searching notes:', error);
+      throw error;
+    });
+  },
+
+  deleteNote: function(noteId) {
+    const url = `${API_URL}/${noteId}`;
+    return fetch(url, {
+      method: 'DELETE'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error deleting note');
+      }
+      return response.json();
+    })
+    .catch(error => {
+      console.error('Error deleting note:', error);
+      throw error;
     });
   }
-
-  updateNote(note) {
-    return new Promise((resolve, reject) => {
-      note["updatedDate"] = new Date();
-      Note.findByIdAndUpdate(note["_id"], note)
-          .then(data => {
-            resolve({_id:data.id});
-          })
-          .catch(error => {
-            reject(error);
-          });
-    });
-  }
-
-  getNotes() {
-    return new Promise((resolve, reject) => {
-      Note.find({})
-        .then((data) => {
-          resolve(data);
-        })
-        .catch((err) => {
-          reject(err);
-        });
-    });
-  }
-
-  getNoteById(noteId) {
-    return new Promise((resolve, reject) => {
-      Note.findById(noteId)
-      .then(data => {
-        resolve(data);
-      })
-      .catch(error => {
-        reject(error);
-      }); 
-    });
-  }
-
-  getNotesByTitle(noteTitle) {
-    return new Promise((resolve, reject) => {
-      // this is equivalent to /${noteTitle}/i, i is a modifier to make the search case-insensitive
-      const query = { title: { $regex: new RegExp(noteTitle, 'i') } };
-      Note.find(query)
-          .then(data => {
-            resolve(data);
-          })
-          .catch(error => {
-            reject(error);
-          });
-    });
-  }
-
-  deleteNote(noteId) {
-    return new Promise((resolve, reject) => {
-      Note.findByIdAndDelete(noteId)
-        .then((data) => {
-          console.log("deleted document:", data);
-          resolve(data);
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    });
-  }
-}
+};
 
 module.exports = Database;
