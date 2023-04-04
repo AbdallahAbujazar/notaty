@@ -1,26 +1,10 @@
-const { Sequelize } = require('sequelize');
-const sequelize = new Sequelize('notaty', 'postgres', 'password', {
-  host: 'localhost',
-  dialect: 'postgres'
+const mongoose = require('mongoose');
+
+const noteSchema = mongoose.Schema({
+    title: { type: String, required: true},
+    content: { type: String, required: true},
+    createdDate: { type: Date, required: true },
+    updatedDate: { type: Date, required: true }
 });
 
-const Note = sequelize.define('Note', {
-  title: {
-    type: Sequelize.STRING,
-    allowNull: false
-  },
-  content: {
-    type: Sequelize.TEXT,
-    allowNull: true
-  },
-  createdDate: {
-    type: Sequelize.DATE,
-    allowNull: false
-  },
-  updatedDate: {
-    type: Sequelize.DATE,
-    allowNull: false
-  }
-});
-
-module.exports = Note;
+module.exports = mongoose.model('Note', noteSchema);
