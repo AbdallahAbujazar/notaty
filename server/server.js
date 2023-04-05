@@ -1,97 +1,56 @@
 const express = require('express');
 const cors = require('cors');
-const Database = require('./Database');
-const bodyParser = require('body-parser');
-
-const db = new Database();
+const { Pool } = require('pg');
+const path = require('path');
+require('dotenv').config();
 
 const app = express();
-const port = 3000;
-// Cross origin resource sharing. Important so that client will be able to make calls to APIs on a different domain.
 app.use(cors());
-app.use(bodyParser.json());
-// The extended option allows to choose between parsing the URL-encoded data with the querystring library (when false)
-// or the qs library (when true). 
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.static('client'));
 
-app.get('/', (req, res) => {
-    let json = {health:true};
-    res.send(json);
-});
+// Set EJS as the template engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-app.get('/notes', (req, res) => {
-    const { title } = req.query;
-    if(title) {
-        db.getNotesByTitle(title)
-            .then(data => {
-                res.send(data);
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-
-    } else {
-        db.getNotes()
-            .then(data => {
-                res.send(data);
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            })
+const pool = new Pool({
+    user: 'notatyuser',
+    host: 'localhost',
+    database: 'notaty',
+    password: 'notatypassword',
+    port: 5432,
+    ssl: false
+  });
+// Route to render the notes page
+app.get('/notes', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM notes');
+        res.render('notes', { notes: result.rows });
+    } catch (err) {
+        res.status(500).send(err.message);
     }
 });
 
-app.post('/notes', (req, res) => {
-    db.addNote(req.body)
-    .then(data => {
-        res.send(data);
-    })
-    .catch(error => {
-        res.status(500).send(error);
-    })
+// Other routes for CRUD operations
+app.post('/notes', async (req, res) => {
+    try {
+        const { title, content } = req.body;
+        const createdDate = new Date();
+        const updatedDate = createdDate;
+
+        const result = await pool.query(
+            'INSERT INTO notes (title, content, created_date, updated_date) VALUES ($1, $2, $3, $4) RETURNING *',
+            [title, content, createdDate, updatedDate]
+        );
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
 });
 
-app.get('/notes/:id', (req, res) => {
-    const { id } = req.params;
-    db.getNoteById(id)
-    .then(data => {
-        if(!data) {
-            res.status(404).send(`Note with id ${id} doesn't exist`);
-        } else {
-            res.send(data);
-        }
-    })
-    .catch(error => {
-        res.status(500).send(error);
-    })
-});
 
-app.put('/notes', (req, res) => {
-    db.updateNote(req.body)
-        .then(data => {
-            if(!data) {
-                res.status(404).send(`Note doesn't exist`);
-            } else {
-                res.send(data);
-            }
-        })
-        .catch(error => {
-            res.status(500).send(error);
-        });
-});
-
-app.delete('/notes/:id', (req, res) => {
-    const { id } = req.params;
-    db.deleteNote(id)
-    .then(data => {
-        res.send(data);
-    })
-    .catch(error => {
-        res.status(500).send(error);
-    })
-});
-
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
-    console.log(`Started node server and listening to port ${port}`);
-    db.connect();
+    console.log(`Server is running on port ${port}`);
 });

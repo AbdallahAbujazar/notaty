@@ -122,8 +122,11 @@
           <p id="editError" class="error"></p>
         </div>
         <div class="modal-footer">
-          <button id="saveEditNoteBtn" onclick="saveEditNote()" type="button" class="action-button">
-            Save
+          <button
+            id="saveEditNoteBtn"
+            onclick="saveEditedNote()"
+            type="button"
+            class="action-button">Save
           </button>
           <button id="cancelEditNoteBtn" type="button" class="action-button">
             Cancel
@@ -131,8 +134,10 @@
         </div>
       </div>
     </div>
-    <script src="note-client.js"></script>
-    <script src="note-handler.js"></script>
-    <script src="modal-handler.js"></script>
+
+    <script src="client/modal-handler.js"></script>
+    <script src="client/note-client.js"></script>
+    <script src="client/note-handler.js"></script>
   </body>
 </html>
+

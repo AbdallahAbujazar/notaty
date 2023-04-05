@@ -33,7 +33,7 @@ function saveNewNote() {
             var modal = document.getElementById("addNoteModal");
             modal.style.display = "none";
             response.json().then(json => {
-                var newNoteId = json["_id"];
+                var newNoteId = json["id"];
                 updateNotesTable(newNoteId);
             });
         } else {
@@ -84,7 +84,7 @@ function saveEditNote() {
     const noteId = modal.getAttribute("noteid");
     const titleStr = document.getElementById("editTitle").value;
     const contentStr = document.getElementById("editContent").value;
-    const noteData = {_id: noteId, title: titleStr, content: contentStr};
+    const noteData = {id: noteId, title: titleStr, content: contentStr};
     updateNote(noteData).then(response => {
         if (response.ok) {
             var modal = document.getElementById("editNoteModal");
@@ -100,4 +100,3 @@ function saveEditNote() {
         document.getElementById("editError").innerHTML = error;
     }) 
 }
-
